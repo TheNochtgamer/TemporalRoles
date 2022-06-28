@@ -52,8 +52,9 @@ client.on('interactionCreate', (interaction) => {
 });
 
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
-    const newRoles = newMember.roles.cache
-    if (oldMember.roles.cache.size == newRoles.size) return;
+    const newRoles = newMember.roles.cache;
+    const oldRoles = oldMember.roles.cache;
+    if (oldRoles.size == newRoles.size) return;
 
     console.log(Colors.magenta(newMember.user.tag + ' sufrio un cambio de rol, ahora tiene ' + Colors.red(oldMember.roles.cache.size) + ' -> ' + Colors.cyan(newRoles.size)));
 
@@ -63,6 +64,14 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
             client.loop.add(role, newMember, timedRole);
         }
     });
+
+    oldRoles.forEach(role => {
+        let timedRole = client.timedRoles.get(role.id);
+        if (timedRole && !newRoles.has(role.id)) {
+            client.loop.kill(role, newMember);
+        }
+    });
+
 });
 
 client.once('ready', async () => {

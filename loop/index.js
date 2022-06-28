@@ -35,16 +35,15 @@ class Loop {
      * @param {GuildMember} member 
      * @param {Number} tiempo 
      */
-    add(role, member, tiempo) {
-        let test = (timer) => timer.roleId == role.id && timer.memberId == member.id;
-        if (this.timers.some(test)) {
+    async add(role, member, tiempo) {
+        if (this.checkTimer(role, member)) {
             console.log(Colors.red('Ya existe este contador R:' + Colors.gray(role.id) + ' | U:' + Colors.gray(member.id)));
             return;
         }
 
         let timeout = moment().add(tiempo, 'millisecond');
         this.timers.push(new Timer(role.id, member.id, member, timeout));
-        console.log(Colors.green('Contador añadido:'), this.timers);
+        console.log('Contador añadido:', this.timers);
     }
 
     /**
@@ -59,9 +58,39 @@ class Loop {
         });
     }
 
+    /**
+     * @param {Role} role 
+     * @param {GuildMember} member 
+     * @returns 
+     */
+    kill(role, member) {
+        for (const index in this.timers) {
+            const timer = this.timers[index];
+            const now = moment();
+            if (timer.roleId == role.id && timer.memberId == member.id && now.diff(timer.timeout, 'second') < -1) {
+                console.log(Colors.red('Contador cortado R:' + Colors.gray(timer.roleId) + ' | U:' + Colors.gray(timer.memberId)));
+                this.timers.splice(index, 1);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @param {Role} role 
+     * @param {GuildMember} member 
+     * @returns 
+     */
+    checkTimer(role, member) {
+        let check = (timer) => timer.roleId == role.id && timer.memberId == member.id;
+        let result = this.timers.some(check);
+
+        return result;
+    }
+
     main() {
         setInterval(() => {
-            let now = moment();
+            const now = moment();
             this.timers.forEach(async (timer, index) => {
                 if (now.diff(timer.timeout, 'millisecond') > 0) {
                     if (!this.bot.timedRoles.get(timer.roleId)) {
